@@ -119,7 +119,7 @@ def get_all_boxes(output, netshape, conf_thresh, num_classes, only_objectness=1,
     for i in range(len(output)):
         pred = output[i]['x'].data
 
-        # find number of workers (.s.t, number of GPUS) 
+        # find number of workers (.s.t, number of GPUS)
         nw = output[i]['n'].data.size(0)
         anchors = output[i]['a'].chunk(nw)[0]
         num_anchors = output[i]['n'].data[0].item()
@@ -166,7 +166,7 @@ def get_region_boxes(output, netshape, conf_thresh, num_classes, anchors, num_an
     cls_max_confs = cls_max_confs.view(-1)
     cls_max_ids = cls_max_ids.view(-1)
     t1 = time.time()
-    
+
     sz_hw = h*w
     sz_hwa = sz_hw*num_anchors
     det_confs = convert2cpu(det_confs)
@@ -186,7 +186,7 @@ def get_region_boxes(output, netshape, conf_thresh, num_classes, anchors, num_an
                     ind = b*sz_hwa + i*sz_hw + cy*w + cx
                     det_conf =  det_confs[ind]
                     conf = det_conf * (cls_max_confs[ind] if not only_objectness else 1.0)
-    
+
                     if conf > conf_thresh:
                         bcx = xs[ind]
                         bcy = ys[ind]
@@ -301,6 +301,7 @@ def plot_boxes(img, boxes, savename=None, class_names=None):
         if len(box) >= 7 and class_names:
             cls_conf = box[5]
             cls_id = box[6]
+            print(cls_id)
             print('%s: %f' % (class_names[cls_id], cls_conf))
             classes = len(class_names)
             offset = cls_id * 123457 % classes
@@ -374,7 +375,7 @@ def do_detect(model, img, conf_thresh, nms_thresh, use_cuda=True):
     else:
         shape=(model.width, model.height)
     boxes = get_all_boxes(out_boxes, shape, conf_thresh, model.num_classes, use_cuda=use_cuda)[0]
-    
+
     t3 = time.time()
     boxes = nms(boxes, nms_thresh)
     t4 = time.time()
@@ -415,7 +416,7 @@ def scale_bboxes(bboxes, width, height):
         dets[i][2] = dets[i][2] * width
         dets[i][3] = dets[i][3] * height
     return dets
-      
+
 def file_lines(thefilepath):
     count = 0
     thefile = open(thefilepath, 'rb')
@@ -432,7 +433,7 @@ def get_image_size(fname):
     from draco'''
     with open(fname, 'rb') as fhandle:
         head = fhandle.read(24)
-        if len(head) != 24: 
+        if len(head) != 24:
             return
         if imghdr.what(fname) == 'png':
             check = struct.unpack('>i', head[4:8])[0]
@@ -444,15 +445,15 @@ def get_image_size(fname):
         elif imghdr.what(fname) == 'jpeg' or imghdr.what(fname) == 'jpg':
             try:
                 fhandle.seek(0) # Read 0xff next
-                size = 2 
-                ftype = 0 
+                size = 2
+                ftype = 0
                 while not 0xc0 <= ftype <= 0xcf:
                     fhandle.seek(size, 1)
                     byte = fhandle.read(1)
                     while ord(byte) == 0xff:
                         byte = fhandle.read(1)
                     ftype = ord(byte)
-                    size = struct.unpack('>H', fhandle.read(2))[0] - 2 
+                    size = struct.unpack('>H', fhandle.read(2))[0] - 2
                 # We are at a SOFn block
                 fhandle.seek(1, 1)  # Skip `precision' byte.
                 height, width = struct.unpack('>HH', fhandle.read(4))
